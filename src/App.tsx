@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut, signInWithPopup, signInAnonymously } from 'firebase/auth';
-import { auth, provider } from './services/firebase';
+import { auth, provider } from './services/firebase.ts';
 import { addChat, getChats, updateChat, deleteChat } from './services/firestore';
 import type { ChatSession, Message } from './types';
 import Sidebar from './components/Sidebar';

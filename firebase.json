@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "lawlens-1d554",
     "public": "dist",
     "ignore": [
       "firebase.json",

@@ -9,7 +9,7 @@ import {
     deleteDoc,
     serverTimestamp
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "./firebase.ts";
 import type { ChatSession } from "../types";
 
 export const getChats = async (userId: string): Promise<Map<string, ChatSession>> => {
