@@ -8,7 +8,7 @@ import { LogoIcon } from './icons';
 interface ChatPanelProps {
     chat: ChatSession | null | undefined;
     isLoading: boolean;
-    onSendMessage: (message: Message) => void;
+    onSendMessage: (message: Message, systemMessage?: string) => void;
 }
 
 const WelcomeScreen: React.FC = () => (

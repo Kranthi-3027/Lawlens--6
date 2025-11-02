@@ -27,7 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     isOpen, setIsOpen, onSignOut 
 }) => {
     return (
-        <aside className={`absolute md:relative z-30 h-full bg-brand-light dark:bg-brand-dark-secondary text-white transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 w-64 flex-shrink-0 flex flex-col`}>
+        <aside className={`absolute md:relative z-30 h-full bg-gray-50 dark:bg-brand-dark-secondary text-gray-800 dark:text-white transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 w-64 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700`}>
             <div className="flex-1 flex flex-col overflow-y-auto">
                 <ChatHistory 
                     chats={chats}
@@ -39,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
             </div>
 
-            <div className="p-4 border-t border-gray-700">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-brand-dark">
                 <ThemeSwitcher theme={theme} onToggleTheme={onToggleTheme} />
                 {user && <UserProfile user={user} onSignOut={() => { onSignOut(); setIsOpen(false); }} />}
             </div>

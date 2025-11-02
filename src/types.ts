@@ -3,7 +3,7 @@ export type Part =
   | { text?: never; inlineData: { mimeType: string; data: string } };
 
 export interface Message {
-  role: 'user' | 'model';
+  role: 'user' | 'model' | 'system';
   parts: Part[];
   timestamp: number;
 }

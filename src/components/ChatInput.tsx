@@ -25,7 +25,7 @@ declare global {
 
 
 interface ChatInputProps {
-    onSendMessage: (message: Message) => void;
+    onSendMessage: (message: Message, systemMessage?: string) => void;
     isLoading: boolean;
 }
 
@@ -139,9 +139,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         if ((!text.trim() && !file) || isLoading) return;
 
         const parts = [];
+        let systemMessage: string | undefined;
+        
         if (file) {
-            const filePart = await fileToGenerativePart(file);
-            parts.push(filePart);
+            const result = await fileToGenerativePart(file);
+            parts.push(result.part);
+            systemMessage = result.systemMessage;
         }
         if (text.trim()) {
             parts.push({ text: text.trim() });
@@ -153,7 +156,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             timestamp: Date.now(),
         };
 
-        onSendMessage(newMessage);
+        onSendMessage(newMessage, systemMessage);
         setText('');
         setFile(null);
         if(fileInputRef.current) {

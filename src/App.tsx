@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut, signInWithPopup, signInAnonymously } from 'firebase/auth';
 import { auth, provider } from './services/firebase.ts';
-import { addChat, getChats, updateChat, deleteChat } from './services/firestore';
+import { addChat, getChats, updateChat, deleteChat, getUserProfile, setTermsAccepted } from './services/firestore';
 import type { ChatSession, Message } from './types';
 import Sidebar from './components/Sidebar';
 import ChatPanel from './components/ChatPanel';
@@ -50,6 +50,12 @@ const App: React.FC = () => {
     }, []);
 
     const loadChats = useCallback(async (currentUser: User) => {
+        // Check if user has accepted terms
+        const userProfile = await getUserProfile(currentUser.uid);
+        if (userProfile?.hasAcceptedTerms) {
+            setHasAgreedToTerms(true);
+        }
+
         const userChats = await getChats(currentUser.uid);
         if (userChats.size > 0) {
             const sortedChats = new Map([...userChats.entries()].sort((a, b) => {
@@ -139,13 +145,24 @@ const App: React.FC = () => {
         }
     };
 
-    const handleSendMessage = useCallback(async (newMessage: Message) => {
+    const handleSendMessage = useCallback(async (newMessage: Message, systemMessage?: string) => {
         if (!activeChatId || !user) return;
 
         const currentChat = chats.get(activeChatId);
         if (!currentChat) return;
 
-        const updatedMessages = [...currentChat.messages, newMessage];
+        let updatedMessages = [...currentChat.messages, newMessage];
+        
+        // Add system message if present (for errors, notifications)
+        if (systemMessage) {
+            const sysMsg: Message = {
+                role: 'system',
+                parts: [{ text: systemMessage }],
+                timestamp: Date.now()
+            };
+            updatedMessages.push(sysMsg);
+        }
+        
         let updatedChat = { ...currentChat, messages: updatedMessages };
 
         const isFirstMessage = currentChat.messages.length === 0;
@@ -165,28 +182,33 @@ const App: React.FC = () => {
                 ...(isFirstMessage && { title: updatedChat.title })
             });
 
-            const aiResponseText = await runChat(updatedMessages);
-            const aiMessage: Message = {
-                role: 'model',
-                parts: [{ text: aiResponseText }],
-                timestamp: Date.now()
-            };
-
-            await updateChat(user.uid, activeChatId, {
-                messages: [...updatedMessages, aiMessage]
-            });
+            // Only send to Gemini if not a pure system error message
+            const shouldCallAI = !systemMessage || !systemMessage.includes('ERROR:');
             
-            setChats(prevChats => {
-                const finalChats = new Map(prevChats);
-                const finalChat = finalChats.get(activeChatId);
-                if (finalChat) {
-                    finalChats.set(activeChatId, { 
-                        ...finalChat, 
-                        messages: [...finalChat.messages, aiMessage] 
-                    });
-                }
-                return finalChats;
-            });
+            if (shouldCallAI) {
+                const aiResponseText = await runChat(updatedMessages);
+                const aiMessage: Message = {
+                    role: 'model',
+                    parts: [{ text: aiResponseText }],
+                    timestamp: Date.now()
+                };
+
+                await updateChat(user.uid, activeChatId, {
+                    messages: [...updatedMessages, aiMessage]
+                });
+                
+                setChats(prevChats => {
+                    const finalChats = new Map(prevChats);
+                    const finalChat = finalChats.get(activeChatId);
+                    if (finalChat) {
+                        finalChats.set(activeChatId, { 
+                            ...finalChat, 
+                            messages: [...finalChat.messages, aiMessage] 
+                        });
+                    }
+                    return finalChats;
+                });
+            }
 
         } catch (error) {
             console.error("Error handling message:", error);
@@ -239,8 +261,11 @@ const App: React.FC = () => {
         }
     };
 
-    const handleAgreeToTerms = () => {
-        setHasAgreedToTerms(true);
+    const handleAgreeToTerms = async () => {
+        if (user) {
+            await setTermsAccepted(user.uid);
+            setHasAgreedToTerms(true);
+        }
     };
 
     const activeChat = (activeChatId && chats.get(activeChatId)) || null;
