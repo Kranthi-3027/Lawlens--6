@@ -13,7 +13,7 @@ import { runChat } from './services/gemini';
 import { MenuIcon, XIcon, LogoIcon } from './components/icons';
 
 const App: React.FC = () => {
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');  // Changed default to 'dark'
     const [chats, setChats] = useState<Map<string, ChatSession>>(new Map());
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -281,7 +281,7 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="flex h-screen w-screen bg-brand-light-secondary dark:bg-brand-dark text-gray-800 dark:text-gray-200 font-sans">
+        <div className="flex h-screen w-screen bg-gradient-to-br from-brand-light via-brand-light-secondary to-gray-100 dark:from-brand-dark dark:via-brand-dark-secondary dark:to-[#151b35] text-gray-800 dark:text-gray-200 font-sans">
             {!user ? (
                 <SignInModal onSignIn={handleSignIn} onGuestSignIn={handleGuestSignIn} />
             ) : !hasAgreedToTerms ? (
@@ -304,11 +304,52 @@ const App: React.FC = () => {
                     />
 
                     <main className="flex-1 flex flex-col transition-all duration-300">
-                        <div className="p-2 md:hidden flex items-center bg-white dark:bg-brand-dark-secondary shadow-md">
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2">
-                                {isSidebarOpen ? <XIcon /> : <MenuIcon />}
-                            </button>
-                            <h1 className="text-lg font-semibold ml-4">{activeChat?.title || 'Lawlens'}</h1>
+                        {/* Enhanced Mobile Header */}
+                        <div className="p-4 md:hidden flex items-center justify-between bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 dark:from-blue-900 dark:via-indigo-900 dark:to-purple-900 shadow-2xl border-b border-white/20 dark:border-white/10 backdrop-blur-lg">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <button 
+                                    onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                                    className="p-2 rounded-xl bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 transition-all duration-200 shadow-lg backdrop-blur-sm"
+                                >
+                                    {isSidebarOpen ? <XIcon className="text-white" size={20} /> : <MenuIcon className="text-white" size={20} />}
+                                </button>
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                    <div className="bg-white/95 p-2 rounded-xl shadow-lg">
+                                        <LogoIcon size={22} className="text-blue-600" />
+                                    </div>
+                                    <div className="flex flex-col min-w-0 flex-1">
+                                        <h1 className="text-sm font-bold text-white truncate">
+                                            {activeChat?.title || 'Lawlens'}
+                                        </h1>
+                                        <span className="text-xs text-white/70 font-medium">AI Assistant</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 ml-2">
+                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/20 dark:bg-white/10 rounded-full backdrop-blur-sm">
+                                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></span>
+                                    <span className="text-xs text-white/90 font-semibold">Online</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Premium Desktop Header */}
+                        <div className="hidden md:flex items-center justify-between px-8 py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-900 dark:via-indigo-900 dark:to-purple-900 shadow-2xl border-b border-white/20 dark:border-white/10">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-white/95 p-2.5 rounded-xl shadow-xl">
+                                    <LogoIcon size={28} className="text-blue-600" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <h1 className="text-2xl font-extrabold text-white tracking-tight">
+                                        {activeChat?.title || 'LAWLENS'}
+                                    </h1>
+                                    <p className="text-sm text-white/80 font-medium">Your Legal Document Assistant</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-white/90 text-sm font-medium">⚡ Powered by</span>
+                                <span className="text-white text-base font-bold bg-white/20 px-3 py-1 rounded-lg backdrop-blur-sm">Gemini</span>
+                            </div>
                         </div>
 
                         <ChatPanel

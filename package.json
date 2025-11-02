@@ -12,6 +12,7 @@
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
     "@google/generative-ai": "^0.21.0",
+    "@tailwindcss/typography": "^0.5.19",
     "dotenv": "^17.2.3",
     "firebase": "^10.8.0",
     "pdfjs-dist": "^5.4.296",

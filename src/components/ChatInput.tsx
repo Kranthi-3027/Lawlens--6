@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Message } from '../types';
 import { fileToGenerativePart, isSupportedFile } from '../utils/file';
-import { PlusIcon, SendIcon, PaperclipIcon, XIcon, MicrophoneIcon, CameraIcon } from './icons';
-import CameraComponent from './CameraComponent';
+import { PlusIcon, SendIcon, PaperclipIcon, XIcon, MicrophoneIcon } from './icons';
 
 interface SpeechRecognition extends EventTarget {
     continuous: boolean;
@@ -33,7 +32,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
     const [text, setText] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
-    const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [micError, setMicError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -64,8 +62,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         const recognition = new SpeechRecognitionAPI();
         recognitionRef.current = recognition;
 
-        recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.continuous = false;  // Changed to false to avoid repeated words
+        recognition.interimResults = false;  // Changed to false to get only final results
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
@@ -73,11 +71,21 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         };
 
         recognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-                .map((result: any) => result[0])
-                .map((result) => result.transcript)
-                .join('');
-            setText(transcript);
+            // Get only the final transcript to avoid duplicates
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            
+            // Append to existing text if there is any
+            if (finalTranscript) {
+                setText(prevText => {
+                    const newText = prevText ? prevText + ' ' + finalTranscript : finalTranscript;
+                    return newText.trim();
+                });
+            }
         };
 
         recognition.onerror = (event) => {
@@ -120,20 +128,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         fileInputRef.current?.click();
     };
 
-    const handleCapture = (image: string) => {
-        const byteString = atob(image.split(',')[1]);
-        const mimeString = image.split(',')[0].split(':')[1].split(';')[0];
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-        }
-        const blob = new Blob([ab], { type: mimeString });
-        const capturedFile = new File([blob], "capture.jpg", { type: mimeString });
-        setFile(capturedFile);
-        setIsCameraOpen(false);
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if ((!text.trim() && !file) || isLoading) return;
@@ -166,7 +160,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
 
     return (
         <div className="p-4 md:p-6 bg-white dark:bg-brand-dark-secondary border-t border-gray-200 dark:border-white/10">
-            {isCameraOpen && <CameraComponent onCapture={handleCapture} onClose={() => setIsCameraOpen(false)} />}
             <form onSubmit={handleSubmit} className="relative">
                 {file && (
                     <div className="absolute bottom-full left-0 mb-2 w-full">
@@ -192,9 +185,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
                     <button type="button" onClick={triggerFileIput} className="p-2 text-gray-500 hover:text-brand-accent dark:hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading || isRecording}>
                         <PlusIcon />
                     </button>
-                    <button type="button" onClick={() => setIsCameraOpen(true)} className="p-2 text-gray-500 hover:text-brand-accent dark:hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading || isRecording}>
-                        <CameraIcon />
-                    </button>
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -215,13 +205,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
                         onClick={handleMicClick}
                         disabled={isLoading}
                         aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-                        className={`p-2.5 rounded-full transition-colors ${
+                        className={`p-3 rounded-full transition-all duration-200 ${
                             isRecording
-                                ? 'bg-red-500 text-white animate-pulse'
-                                : 'text-gray-500 hover:text-brand-accent dark:hover:text-white'
+                                ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50'
+                                : 'text-gray-500 hover:text-brand-accent hover:bg-brand-accent/10 dark:hover:text-white dark:hover:bg-white/10'
                         }`}
                     >
-                        <MicrophoneIcon />
+                        <MicrophoneIcon size={20} />
                     </button>
                     <button
                         type="submit"
